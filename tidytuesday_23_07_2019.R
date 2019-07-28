@@ -20,8 +20,6 @@ wildlife_impacts[,.N, by=.(incident_month, operator, state, incident_month, heig
 
 # let's plot operator, state, height, speed, sky, time of day
 
-
-
 #add column with full state names to wildlife_impacts
 merge(wildlife_impacts, states, by="state") %>% 
   .[,.N,by="region"] %>% 
