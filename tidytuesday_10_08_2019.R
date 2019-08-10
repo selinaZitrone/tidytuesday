@@ -43,18 +43,41 @@ bobRossCateg[,category := c("sky","countryside", "beach","beach","city","city","
 
 frame <- png::readPNG("images/bobRossFrameLandscape4.png")
 
-p1 <- bob_ross_content %>% merge(bobRossCateg, by="variable") %>% 
+
+
+bob_ross_content %>% merge(bobRossCateg, by="variable") %>% 
   .[,sum(value),by=.(category,variable)] %>% 
   .[,variable:=gsub("_"," ",variable)] %>% 
   .[variable =="steve ross", variable:="Steve Ross"] %>% 
   .[variable == "diane_andre", variable := "Diane Andre"] %>% 
-  ggplot(aes(label = variable, size = V1, color=category))+
-  geom_text_wordcloud(grid_size = 5)+
+  .[,angle:= 90 * sample(c(0, 1), 51, replace = TRUE, prob = c(60, 40))] %>% 
+  ggplot(aes(label = variable, size = V1, color=category, angle = angle))+
+  geom_text_wordcloud()+
   scale_size_area(max_size=20)+
   theme_minimal()+
-  scale_color_viridis_d()+
+  scale_color_viridis_d(option="inferno", direction = -1)+
   annotation_custom(grid::rasterGrob(frame,
                     width = unit (.9, "npc"),
                     height = unit(.9, "npc")),
-        -Inf, Inf, -Inf, Inf)
+        -Inf, Inf, -Inf, Inf)+
+  theme(legend.position = "none",
+        panel.background = element_rect(fill = 'grey23'))
+
+#legend
+
+bob_ross_content %>% merge(bobRossCateg, by="variable") %>% 
+  .[,sum(value),by=.(category)] %>% 
+  .[order(category)] %>% 
+  ggplot(aes(x=1,label=category,y=9:1, size=V1/10, color = category))+
+  geom_text()+
+  scale_color_viridis_d(option="viridis", direction = -1)+
+  theme_void()+
+  theme(legend.position = "none",
+        panel.background = element_rect(fill = 'grey23')
+        )
+
+bob_ross_content %>% merge(bobRossCateg, by="variable") %>% 
+  .[,sum(value),by=.(category)] %>% 
+  .[order(category)] %>% 
+  ggplot()
 
