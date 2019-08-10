@@ -2,6 +2,8 @@ library("data.table")
 library("magrittr")
 library("ggplot2")
 library("viridis")
+library("ggwordcloud")
+
 bob_ross <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-08-06/bob-ross.csv")
 bob_ross <- data.table(bob_ross) %>% 
   setnames(names(.), tolower(names(.)))
@@ -39,13 +41,20 @@ bobRossCateg[,category := c("sky","countryside", "beach","beach","city","city","
                             "mountain","people","city","sky","forest","forest","mountain","beach","countryside","other"
                             )]
 
-bob_ross_content %>% merge(bobRossCateg, by="variable") %>% 
+frame <- png::readPNG("images/bobRossFrameLandscape4.png")
+
+p1 <- bob_ross_content %>% merge(bobRossCateg, by="variable") %>% 
   .[,sum(value),by=.(category,variable)] %>% 
+  .[,variable:=gsub("_"," ",variable)] %>% 
+  .[variable =="steve ross", variable:="Steve Ross"] %>% 
+  .[variable == "diane_andre", variable := "Diane Andre"] %>% 
   ggplot(aes(label = variable, size = V1, color=category))+
-  geom_text_wordcloud()+
+  geom_text_wordcloud(grid_size = 5)+
   scale_size_area(max_size=20)+
   theme_minimal()+
-  scale_color_viridis_d()
-
-
+  scale_color_viridis_d()+
+  annotation_custom(grid::rasterGrob(frame,
+                    width = unit (.9, "npc"),
+                    height = unit(.9, "npc")),
+        -Inf, Inf, -Inf, Inf)
 
