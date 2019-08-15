@@ -65,6 +65,28 @@ p1 <- bob_ross_content %>% merge(bobRossCateg, by="variable") %>%
   theme(legend.position = "none")#,
         #panel.background = element_rect(fill = 'grey23'))
 
+p2 <- bob_ross_content %>% merge(bobRossCateg, by="variable") %>% 
+  .[,sum(value),by=.(category)] %>% 
+  .[order(category)] %>% 
+  .[,prop := round((V1/(.[,sum(V1)]))*100,0)] %>% 
+  ggplot(aes(x=2, y = prop, fill = category))+
+  geom_bar(stat = "identity", color="white")+
+  coord_polar("y",start=0)+
+  #geom_text(aes(y= prop, label = prop), color = "white")+
+  scale_fill_viridis_d(option="viridis", direction = -1)+
+  theme_void()+
+  theme(legend.position = "left")+#,
+  #plot.background = element_rect(fill = 'grey23'),
+  #legend.text = element_text(color="white"))
+  xlim(0.5,2.5)
+# theme(legend.position = "none",
+#       panel.background = element_rect(fill = 'grey23')
+# )
+#save 
+p3 <- ggpubr::ggarrange(p1,p2, widths = c(1.2, 0.8))
+ggsave("images/bobRossResult.pdf", p3, width = 20, height = 10, unit = "cm")
+
+
 #legend
 
 bob_ross_content %>% merge(bobRossCateg, by="variable") %>% 
@@ -80,23 +102,7 @@ bob_ross_content %>% merge(bobRossCateg, by="variable") %>%
 
 #pie/donut chart content
 
-p2 <- bob_ross_content %>% merge(bobRossCateg, by="variable") %>% 
-  .[,sum(value),by=.(category)] %>% 
-  .[order(category)] %>% 
-  .[,prop := round((V1/(.[,sum(V1)]))*100,0)] %>% 
-  ggplot(aes(x=2, y = prop, fill = category))+
-  geom_bar(stat = "identity", color="white")+
-  coord_polar("y",start=0)+
-  #geom_text(aes(y= prop, label = prop), color = "white")+
-  scale_fill_viridis_d(option="viridis", direction = -1)+
-  theme_void()+
-  theme(legend.position = "left")+#,
-        #plot.background = element_rect(fill = 'grey23'),
-        #legend.text = element_text(color="white"))
-  xlim(0.5,2.5)
-  # theme(legend.position = "none",
-  #       panel.background = element_rect(fill = 'grey23')
-  # )
+
 
 #pie/donut chart frames
 
@@ -113,5 +119,4 @@ bob_ross_frames[,.(not_framed)] %>%
 bob_ross_frames
 
 
-p3 <- ggpubr::ggarrange(p1,p2, widths = c(1.2, 0.8))
-ggsave("images/bobRossResult.pdf", p3, width = 20, height = 10, unit = "cm")
+
