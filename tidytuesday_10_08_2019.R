@@ -8,7 +8,6 @@ bob_ross <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/t
 bob_ross <- data.table(bob_ross) %>% 
   setnames(names(.), tolower(names(.)))
 
-  
 bob_ross[,season:=as.integer(gsub(".*S(.+)E.*", "\\1", episode))]
 bob_ross %>% 
   melt(id.vars = c("episode","title","season")) %>%
@@ -21,6 +20,7 @@ bob_ross %>%
 
 bob_ross_frames <- bob_ross[, .SD, .SDcols = names(bob_ross) %like% "frame"] %>% 
   cbind(bob_ross[,.(season,title,episode)])
+
 
 bob_ross_frames %>% 
   .[framed == 0,not_framed := 1] %>% 
@@ -51,7 +51,7 @@ p1 <- bob_ross_content %>% merge(bobRossCateg, by="variable") %>%
   .[,sum(value),by=.(category,variable)] %>% 
   .[,variable:=gsub("_"," ",variable)] %>% 
   .[variable =="steve ross", variable:="Steve Ross"] %>% 
-  .[variable == "diane_andre", variable := "Diane Andre"] %>% 
+  .[variable == "diane andre", variable := "Diane Andre"] %>% 
   .[,angle:= 90 * sample(c(0, 1), nrow(.), replace = TRUE, prob = c(60, 40))] %>% 
   ggplot(aes(label = variable, size = V1, color=category, angle = angle))+
   geom_text_wordcloud()+
@@ -72,7 +72,7 @@ p2 <- bob_ross_content %>% merge(bobRossCateg, by="variable") %>%
   ggplot(aes(x=2, y = prop, fill = category))+
   geom_bar(stat = "identity", color="white")+
   coord_polar("y",start=0)+
-  #geom_text(aes(y= prop, label = prop), color = "white")+
+  geom_text(aes(y= prop, label = prop), color = "white")+
   scale_fill_viridis_d(option="viridis", direction = -1)+
   theme_void()+
   theme(legend.position = "left")+#,
