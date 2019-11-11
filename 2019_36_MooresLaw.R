@@ -4,6 +4,8 @@ library(magrittr)
 library(gganimate)
 library(viridis)
 
+
+extrafont::font_import("Vivaldi")
 # function to delete na rows only if the na is in a certain column
 
 completeFun <- function(data, desiredCols) {
@@ -46,7 +48,7 @@ plot<-ggplot(all,aes(x=date_of_introduction,y=transistor_count, color=type, fill
   geom_point(data=mean_all, aes(x=gganimateDate))+geom_line(data=mean_all, aes(x=gganimateDate))+
   geom_line(data=mean_all,aes(y=moore_pred), linetype= "dashed")+
   scale_y_log10(breaks = breaks, labels = scales::comma(breaks), limits = c(10**0, 5*10**11))+
-  scale_x_continuous(breaks = seq(1960,2020,10))+
+  scale_x_continuous(breaks = seq(1960,2020,20))+
   facet_wrap(~type)+
   ggdark::dark_theme_bw()+
   theme(panel.grid = element_blank(),
@@ -58,25 +60,28 @@ plot<-ggplot(all,aes(x=date_of_introduction,y=transistor_count, color=type, fill
   scale_color_manual(values=c("#DFCD57","#8184AD","#5CC38C"))+
   geom_text(aes(label = toupper(type), x = 1961, y = 1.5*10^11),   # from cédric
             color = "grey16",
-            size = 27,
+            size = 14,
             hjust = 0
             )+
   labs(x= "Year of introduction", y = "log10 transistor count",title = "MOORE'S LAW", 
        subtitle = "Moore's law states that the given number of transistors in a chip will double every 2 years.",
        caption = "Visualization by Selina Baldauf | datasource: wikipedia")
   
+ggsave("C:/Users/Selina/Google Drive/tidytuesday/moore.png", plot, width = 16, height = 9,
+       unit = "cm")
+
 animation <- plot+
   transition_reveal(gganimateDate)
 
   # Saving out the annimation
 
-options(gganimate.dev_args = list(width = 1000, height = 500))
+options(gganimate.dev_args = list(width = 1000, height = 1000))
 animate(animation, nframes = 200, fps = 10, end_pause = 10) %>% 
 
 anim_save(filename = "moores_law.gif",
           path = "C:/Users/Selina/Google Drive/tidytuesday", animation = last_animation())
   
   
-
+gganimate(animation, ani.width= 1000, ani.height=1000, "test.gif")
 
                      
