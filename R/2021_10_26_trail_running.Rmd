@@ -1,0 +1,102 @@
+---
+title: "Tidytuesday 26/10/2021"
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# The data
+
+International trail running association
+
+Results of a study
+
+- The longer the distance, the shorter the gender pace gap
+- participation increased over the years
+- increasing number of ultrarunners that participate in multiple runs
+
+```{r get data}
+ultra_rankings <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-10-26/ultra_rankings.csv')
+race <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2021/2021-10-26/race.csv')
+```
+
+# Cleaning data
+
+```{r}
+ultra.sub <- ultra_rankings %>%
+  left_join(race) %>%
+  select(race_year_id, rank, time, age, gender, nationality, time_in_seconds, distance, elevation_gain) %>% 
+  filter(!is.na(gender))
+
+summary(ultra.sub)
+# look only at the best 10 runners
+#ultra.sub <- filter(ultra.sub, rank <= 10)
+
+```
+
+# Plot 1
+
+The longer the distance, the shorter the gap between male and female runners
+
+
+First, look at the distances 
+```{r}
+ggplot(ultra.sub, aes(x=distance)) + geom_density()
+# divide in quartiles
+quantile(ultra.sub$distance, c(0.3, 0.6))
+# Add distance classes
+ultra.sub <- ultra.sub %>%
+  filter(!is.na(gender) & !is.na(time_in_seconds)) %>%
+  mutate(distance_class = case_when(
+    distance < 6 ~ "very short",
+    distance > 6 & distance < 50 ~ "short",
+    distance >=50 & distance <150 ~"medium",
+    distance > 150 ~ "long",
+    distance > 170 ~ "very long"
+   )) %>% 
+   mutate(distance_class = factor(distance_class, levels = c("very short", "short", "medium", "long", "very long")))
+
+# This is weird
+ultra.sub %>% 
+  group_by(distance_class) %>% 
+  summarize(mean(time_in_seconds), mean(elevation_gain))
+
+# is there something wrong with the time in seconds?
+ultra.sub <- ultra.sub %>% 
+  mutate(time = str_replace_all(time, "H\\s|M\\s", ":")) %>% 
+  mutate(time = str_replace(time, "S", "")) %>% 
+  mutate(time = lubridate::hms(time))# %>% 
+  group_by(distance_class) %>% str()
+  summarize(mean(time_in_seconds), mean(time))
+
+```
+```{r}
+ultra.sub %>%filter(gender == "M") %>%  
+  ggplot(aes(x=distance, y=time)) +geom_point()
+```
+
+
+```{r}
+# Add 
+ultra.sub %>% 
+  mutate(time_hours = time_in_seconds / 60 / 60) %>% 
+ggplot(aes(x = gender, y = time_hours, fill = gender)) +
+    ggdist::stat_halfeye(
+      adjust = .5,
+    #width = .6,
+    .width = 0,
+    justification = -.2,
+    point_colour = NA
+    )+
+  geom_boxplot(
+    width = .15,
+    outlier.shape = NA
+  )+
+  coord_flip()+
+  facet_wrap(~distance_class, scales = "free_x")
+```
+

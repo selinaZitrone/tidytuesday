@@ -1,0 +1,140 @@
+---
+title: "Tidytuesday 16/11/2021"
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(patchwork)
+```
+
+## Get the data
+
+population density per km2
+
+```{r}
+# raster objects
+# turn raster objects to data frames and return the x and y coordinates with xy = tRUE
+# rename 3rd column to be population
+pop2000 <- afrilearndata::afripop2000 %>% raster::as.data.frame(xy = TRUE) %>% rename(population = 3) %>% filter(!is.na(population))
+pop2020 <- afrilearndata::afripop2020 %>% raster::as.data.frame(xy = TRUE) %>% rename(population = 3) %>% filter(!is.na(population))
+```
+
+## The question
+
+How did population density change between 2000 and 2020? Which places were popular to move to?
+
+```{r}
+ggplot(pop2000)+
+  geom_tile(aes(x=x, y=y, fill = population))+
+  theme_void()
+```
+
+Looks like there are a lot of low numbers.
+Maybe log transform??
+
+```{r}
+ggplot(pop2000)+
+  geom_tile(aes(x=x, y=y, fill = log(population)))+
+  scale_fill_viridis_c() +
+  theme_void()
+```
+
+# other approach
+
+convert high values to see differences better
+
+Also not very helpful... Look at the histogram of population densities
+
+```{r}
+ggplot(pop2000) + 
+  geom_histogram(aes(x=population))
+
+ggplot(pop2020) +
+  geom_histogram(aes(x=population))
+```
+
+Most population densities are very low...
+
+Which threshold can be chosen for plotting?
+
+Idea from https://github.com/gkaramanis/tidytuesday/blob/master/2021/2021-week45/afrimapr.R
+
+```{r}
+pop2000 %>% 
+  filter(population < 300) %>% 
+ggplot() + 
+  geom_histogram(aes(x=population))
+```
+
+
+Relable everything higher than the threshold
+
+```{r}
+threshold = 500
+
+pop2000_final <- pop2000 %>% 
+  mutate(population = case_when(
+    population <= threshold ~ population,
+    TRUE ~ threshold + 100
+  ))
+pop2020_final <- pop2020 %>% 
+  mutate(population = case_when(
+    population <= threshold ~ population,
+    TRUE ~ threshold + 100
+  ))
+```
+
+
+Make the same plot again
+
+```{r}
+# library(showtext)
+# font_paths()
+# font_files() # available fonts
+# font_families()
+# 
+# showtext_auto()
+# 
+# sysfonts::font_add_google(name = "Architects Daughter")
+
+pop2000_plot <- 
+ggplot(pop2000_final)+
+  geom_tile(aes(x=x, y=y, fill = population))+
+  ggtitle("2020")
+
+pop2020_plot <- 
+ggplot(pop2020_final)+
+  geom_tile(aes(x=x, y=y, fill = population))+
+  ggtitle("2020")
+
+# color picker https://tristen.ca/hcl-picker/#/hlc/6/1/1C1E2A/EFEE69
+
+pal <- c("#1C1E2A","#224653","#21736F","#46A178","#8FCB70","#EFEE69")
+
+pop2000_plot + pop2020_plot +
+  plot_layout(guides = "collect") +
+  plot_annotation(
+    title = "Population density in Africa",
+    subtitle = ""
+  ) &
+  # scale_fill_viridis_c(option = "inferno") &
+  scale_fill_gradientn(colors = pal, breaks = seq(0, threshold + 100, 100), labels = c(seq(0, threshold, 100), paste0(">", threshold))) &
+  guides(fill = guide_colorbar(barwidth = 30, title.position = "top")) &
+  labs(fill = "Population density (humans / km2)") &
+  theme_void() &
+  theme(
+    plot.background = element_rect(fill = "gray20", color = NA),
+    legend.position = "bottom",
+    text = element_text(family = , color = "gray90" ),
+    plot.title = element_text(size = 20, family = "Bauhaus 93"),
+    plot.subtitle = element_text(size = 20)
+  )
+```
+
+
+
+
+
